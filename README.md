@@ -121,7 +121,18 @@ python selftest.py "Reply with exactly one word: PONG"
 python -m pro_bridge.server     # serves http://<host>:8765/mcp
 ```
 
-Then [wire it into your client](#use-it-in-claude-code).
+Then [wire it into your client](#use-it-in-claude-code) — a **one-time** step.
+
+> **After a reboot** you only need to bring the bridge back up; the client
+> registration persists. Use the one-shot launcher:
+> ```powershell
+> powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1   # Windows
+> ```
+> ```bash
+> ./scripts/start-all.sh                                           # macOS / Linux
+> ```
+> To make it fully hands-off, add that launcher to your OS startup items
+> (Windows Task Scheduler "at log on", or a macOS/Linux login item).
 
 ## Topologies
 
