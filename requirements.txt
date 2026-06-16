@@ -1,0 +1,5 @@
+# pro-bridge runtime deps. No `playwright install` needed — we attach to your
+# existing Chrome over CDP rather than downloading a browser.
+playwright>=1.40
+mcp>=1.2
+uvicorn>=0.27
