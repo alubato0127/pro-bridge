@@ -23,10 +23,28 @@ mistake.
    tool: ask_gpt_pro(prompt, conversation_id?)             /debate-high
 ```
 
-The browser automation stays entirely on the laptop; only the MCP request/reply
-crosses the network.
+The browser automation stays entirely on the host with the browser; only the MCP
+request/reply crosses the network (and on a single machine, it doesn't even do
+that).
 
-## Setup (laptop = Windows)
+## Topologies
+
+pro-bridge is network-transparent: run it on whatever machine has the logged-in
+browser, then point your MCP client at it. Both of these work with the same code
+— only the URL the client uses changes.
+
+| Client (Claude Code, etc.) | Browser host | `PRO_BRIDGE_HOST` | Client connects to |
+|---|---|---|---|
+| **Same machine** as the browser | same | `127.0.0.1` | `http://localhost:8765/mcp` |
+| **Different machine** (e.g. headless server) | your laptop/desktop | `0.0.0.0` | `http://<host-LAN/Tailscale-IP>:8765/mcp` |
+
+The browser host can be **Windows, macOS, or Linux** — use the matching launch
+script in `scripts/`. The client can be any MCP-capable tool (Claude Code,
+Cursor, etc.) on any OS. For the same-machine case you can leave the token unset
+(localhost only); for cross-machine, keep a token and put it behind a private
+network like Tailscale.
+
+## Setup (the machine that has the browser)
 
 1. **Install deps** (Python 3.10+):
    ```powershell
@@ -34,9 +52,14 @@ crosses the network.
    ```
    No `playwright install` needed — we attach to your existing Chrome.
 
-2. **Start the bridge Chrome** (logs in once, stays logged in):
+2. **Start the bridge browser** (logs in once, stays logged in):
    ```powershell
+   # Windows
    powershell -ExecutionPolicy Bypass -File scripts\start-chrome-debug.ps1
+   ```
+   ```bash
+   # macOS / Linux (auto-detects chrome/chromium/brave/edge; override with BROWSER=)
+   ./scripts/start-chrome-debug.sh
    ```
    In the window that opens: log into chatgpt.com, confirm Pro, select the Pro
    model. Leave it open (minimize is fine).
@@ -66,11 +89,17 @@ crosses the network.
    It listens on `http://0.0.0.0:8765/mcp`. Find your tailnet IP with
    `tailscale ip -4`.
 
-## Wire up Claude Code (remote box)
+## Wire up Claude Code
 
+**Same machine** as the browser (simplest — no token needed):
+```bash
+claude mcp add --transport http gpt-pro http://localhost:8765/mcp --scope user
+```
+
+**Different machine** (client on a headless server, browser on your laptop):
 ```bash
 claude mcp add --transport http gpt-pro \
-  http://<laptop-tailnet-ip>:8765/mcp \
+  http://<browser-host-ip>:8765/mcp \
   --scope user \
   --header "Authorization: Bearer <PRO_BRIDGE_TOKEN>"
 ```
